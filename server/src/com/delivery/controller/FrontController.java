@@ -15,17 +15,29 @@ public class FrontController {
 	public static void main(String[] args) {
 		try {
 			ExecutorService executors = Executors.newCachedThreadPool();
+			ServerSocket socket = new ServerSocket(9000);
 
 			while(true) {
-				ServerSocket serverSocket = new ServerSocket(8000);
-				Socket socket = serverSocket.accept();
-				Request request = parse(socket);
-				
-				Thread clientThread = new Thread() {
-				    public void run() {
-				    	dispatchRequest(request, socket);
-				    }
-				};
+				Socket connection = socket.accept();
+
+				Thread clientThread = new Thread(() -> {
+					try {
+						//ObjectInputStream input = new ObjectInputStream(connection.getInputStream());
+						//ObjectOutputStream output = new ObjectOutputStream(connection.getOutputStream());
+
+						while (true) {
+							ObjectInputStream input = new ObjectInputStream(connection.getInputStream());
+							ObjectOutputStream output = new ObjectOutputStream(connection.getOutputStream());
+							Request request = (Request) input.readObject();
+							Response response = new Response();
+							dispatchRequest(request, response);
+							output.writeObject(response);
+						}
+					}
+					catch (ClassNotFoundException | IOException e) {
+						e.printStackTrace();
+					}
+				});
 
 				executors.execute(clientThread);
 			}
@@ -34,37 +46,9 @@ public class FrontController {
 			e.printStackTrace();
 		}
 	}
-	
-	private static Request parse(Socket socket) {
-		ObjectInputStream objectInputStream;
-		Request request = null;
-		
-		try {
-			objectInputStream = new ObjectInputStream(socket.getInputStream());
-			request = (Request) objectInputStream.readObject();
-		}
-		catch(ClassNotFoundException | IOException e) {
-			e.printStackTrace();
-		}
-		
-		return request;
-	}
 
-	private static void dispatchRequest(Request request, Socket socket) {
-		Response response = new Response();
+	private static void dispatchRequest(Request request, Response response) {
 		Dispatcher.dispatch(request, response);
-		respond(response, socket);
-	}
-	
-	private static void respond(Response response, Socket socket) {
-		try {
-			ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
-			objectOutputStream.writeObject(response);
-		} 
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-
 	}
 }
 
