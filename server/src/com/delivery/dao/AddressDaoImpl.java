@@ -31,7 +31,6 @@ public class AddressDaoImpl implements AddressDao {
 				if (generatedKeys.next()) {
 					address.setId(generatedKeys.getLong(1));
 				}
-
 			}
 			else {
 				address.setId(rs.getLong("id"));
@@ -39,9 +38,6 @@ public class AddressDaoImpl implements AddressDao {
 		}
 		catch (SQLException e) {
 			e.printStackTrace();
-		}
-		finally {
-			DBConnection.getInstance().putConnection(conn);
 		}
 		
 		return address;

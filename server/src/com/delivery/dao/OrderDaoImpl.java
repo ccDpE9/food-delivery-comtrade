@@ -38,9 +38,6 @@ public class OrderDaoImpl implements OrderDao {
 		catch (SQLException e) {
 			e.printStackTrace();
 		}
-		finally {
-			DBConnection.getInstance().putConnection(conn);
-		}
 	}
 
 }

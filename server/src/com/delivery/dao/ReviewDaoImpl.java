@@ -31,11 +31,7 @@ public class ReviewDaoImpl implements ReviewDao {
 		catch (SQLException e) {
 			e.printStackTrace();
 		}
-		finally {
-			DBConnection.getInstance().putConnection(conn);
-		}
 		
 		return result;
 	}
-
 }

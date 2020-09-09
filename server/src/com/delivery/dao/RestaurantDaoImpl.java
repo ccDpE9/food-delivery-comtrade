@@ -9,7 +9,7 @@ import java.util.List;
 
 import com.delivery.database.DBConnection;
 import com.delivery.domain.Address;
-import com.delivery.domain.Cuisine;
+import com.delivery.domain.Category;
 import com.delivery.domain.Meal;
 import com.delivery.domain.Restaurant;
 
@@ -17,23 +17,31 @@ public class RestaurantDaoImpl implements RestaurantDao {
 
 	@Override
 	public void save(Restaurant restaurant) {
-		// @TODO: AddressDao addressDao = new AddressDaoImpl().getOrSave(restaurt.getAddress());
 		Connection conn = DBConnection.getInstance().getConnection();
-		String sql = "insert into restaurant(name, email, phone, address, deliveryTime) values(?,?,?,?,?);";
+		String sql = "insert into restaurant(name, email, phone, deliveryTime, minimalDelivery, deliveryPrice, address_id, admin_id, category_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?);";
 		try {
 			PreparedStatement ps = conn.prepareStatement(sql);
 			ps.setString(1, restaurant.getName());
 			ps.setString(2, restaurant.getEmail());
 			ps.setString(3, restaurant.getPhone());
-			ps.setLong(4, restaurant.getAddress().getId());
-			ps.setString(5, restaurant.getDeliveryTime());
+			ps.setString(4, restaurant.getDeliveryTime());
+			ps.setString(5, restaurant.getMinimalDelivery());
+			ps.setString(6, restaurant.getDeliveryPrice());
+			ps.setLong(7, restaurant.getAddress().getId());
+			ps.setLong(8, restaurant.getAdmin().getId());
+			ps.setInt(9, restaurant.getCategory().getId());
 			ps.execute();
+			
+			conn.commit();
 		} 
 		catch (SQLException e) {
-			e.printStackTrace();
-		}
-		finally {
-			DBConnection.getInstance().putConnection(conn);
+			try {
+				e.printStackTrace();
+				conn.rollback();
+			}
+			catch (SQLException err) {
+				err.printStackTrace();
+			}
 		}
 	}
 
@@ -52,7 +60,7 @@ public class RestaurantDaoImpl implements RestaurantDao {
 				address.setStreet(rs.getString("street"));
 				address.setStreetNumber(rs.getString("streetNumber"));
 
-				Cuisine cuisine = new Cuisine();
+				Category cuisine = new Category();
 				cuisine.setName(rs.getNString("cuisine.name"));
 
 				Restaurant restaurant = new Restaurant();
@@ -61,16 +69,13 @@ public class RestaurantDaoImpl implements RestaurantDao {
 				restaurant.setPhone(rs.getString("phone"));
 				restaurant.setDeliveryTime(rs.getString("deliveryTime"));
 				restaurant.setAddress(address);
-				restaurant.setCuisine(cuisine);
+				restaurant.setCategory(cuisine);
 
 				restaurants.add(restaurant);
 			}
 		}
 		catch (SQLException e) {
 			e.printStackTrace();
-		}
-		finally {
-			DBConnection.getInstance().putConnection(conn);
 		}
 
 		return restaurants;
@@ -97,7 +102,7 @@ public class RestaurantDaoImpl implements RestaurantDao {
 				address.setStreet(rs.getString("address.street"));
 				address.setStreetNumber(rs.getString("address.streetNumber"));
 
-				Cuisine cuisine = new Cuisine();
+				Category cuisine = new Category();
 				cuisine.setName(rs.getNString("cuisine.name"));
 
 				restaurant.setName(rs.getString("name"));
@@ -105,7 +110,7 @@ public class RestaurantDaoImpl implements RestaurantDao {
 				restaurant.setPhone(rs.getString("phone"));
 				restaurant.setDeliveryTime(rs.getString("deliveryTime"));
 				restaurant.setAddress(address);
-				restaurant.setCuisine(cuisine);
+				restaurant.setCategory(cuisine);
 
 				List<Meal> meals = new ArrayList<>();
 				ps = conn.prepareStatement(mealSql);
@@ -120,9 +125,6 @@ public class RestaurantDaoImpl implements RestaurantDao {
 		}
 		catch (SQLException e) {
 			e.printStackTrace();
-		}
-		finally {
-			DBConnection.getInstance().putConnection(conn);
 		}
 
 		return restaurant;
